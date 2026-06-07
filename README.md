@@ -1,120 +1,180 @@
-# Adaptive Learning Engine
+# Adaptive Learning Platform
 
-A clean, modular portfolio project for a self-improving adaptive learning system written in pure Python.
+## Overview
 
-## Description
+Adaptive Learning Platform is a personalized study recommendation system designed to help learners identify what they should study next.
 
-This project models an adaptive study system that tracks topic performance, predicts priorities, and updates recommendation weights based on real feedback.
+The platform tracks topic performance, analyzes learning trends, calculates mastery and confidence scores, and generates adaptive recommendations based on a student's progress.
+
+The goal of the project is to explore how data-driven learning systems can improve study efficiency by prioritizing weak or forgotten topics instead of relying on static study schedules.
+
+---
+
+## Live Demo
+
+Demo: https://adaptive-learning-platform-vkeg.onrender.com/
+
+---
 
 ## Features
 
-- Topic progress tracking with attempt history and spaced repetition scheduling
-- Mastery, confidence, and trend analytics
-- Priority-based recommendation engine with learning path recommendations
-- Learner account management with secure login and per-user profiles
-- Curriculum grouping by subject and review readiness dashboard
-- Import/export and backup support for full dataset recovery
-- JSON persistence for users, profiles, topics, and system state
-- Browser-based UI, monitoring endpoints, and CLI workflow
-- Docker-ready deployment for production environments
+### Learning Analytics
 
-## System Architecture
+* Topic progress tracking
+* Mastery score calculation
+* Confidence score calculation
+* Trend analysis from historical performance
+* Adaptive review scheduling
+* Priority-based topic recommendations
+* Learning path generation
 
-- `core/`
-  - `models.py`: dataclasses for topics and system state
-  - `analytics.py`: mastery, confidence, and trend calculations
-  - `decision.py`: scheduling and priority recommendation logic
-  - `feedback.py`: feedback logging and weight adjustment
-- `storage/`
-  - `database.py`: JSON persistence helpers
-  - `repository.py`: repository interfaces for topics and state
-- `services/`
-  - `learning_service.py`: central controller connecting all modules
-- `utils/`
-  - `math_utils.py`: shared helper functions
-  - `security.py`: account and cookie signing helpers
-- `main.py`: CLI entrypoint with data export/import and backup commands
-- `config.py`: file paths and deployment settings
-- `Dockerfile`: production build container
-- `docker-compose.yml`: simple local deployment stack
+### User Management
 
-## Feedback Loop
+* User registration
+* User authentication
+* Secure password hashing using PBKDF2
+* Session-based login system
 
-When a study session is logged, the system:
+### Study Tracking
 
-1. Records completed topic scores
-2. Measures score improvement
-3. Updates the feedback log
-4. Adjusts recommendation weights slightly based on performance
+* Attempt history storage
+* Study session logging
+* Feedback tracking
+* Progress summaries
 
-This keeps recommendations adaptive and evidence-driven.
+### Data Management
 
-## Run the project
+* CSV export
+* JSON export
+* Data import support
+* Automated backups
 
-From the `adaptive-learning-engine` folder, run:
+### Web Application
 
-```bash
-python main.py create-account --username alice --password secret
-python main.py create-profile --name alice
-python main.py add-topic --topic Algebra --score 70 --difficulty 0.5
-python main.py recommend --limit 3
-python main.py record-attempt --topic Algebra --score 82
-python main.py study-session --recommended Algebra --completed Algebra:82
-python main.py summary --profile alice
-```
+* Browser-based interface
+* Dashboard page
+* Recommendation page
+* Progress summary page
+* Curriculum overview
+* Dark mode support
 
-### Export, import, backup
+### Deployment
 
-```bash
-python main.py export-data --output backup.json
-python main.py import-data --input backup.json
-python main.py backup-data
-```
+* Dockerized application
+* Render deployment support
+* Health monitoring endpoints
+* Configurable environment variables
 
-## Web Interface
+---
 
-Start the browser UI:
+## Recommendation Engine
 
-```bash
-python main.py run-server --host localhost --port 8000
-```
+The recommendation engine evaluates topics using multiple learning factors:
 
-Then open `http://localhost:8000` in your browser.
+1. Mastery Score
 
-The app also exposes lightweight monitoring endpoints:
+   * Measures understanding of a topic based on performance.
 
-- `http://localhost:8000/health`
-- `http://localhost:8000/metrics`
+2. Confidence Score
 
-## Environment configuration
+   * Estimates confidence using score consistency and attempt history.
 
-The server can be configured with environment variables for deployment and security:
+3. Trend Analysis
 
-- `SERVER_HOST` — host to bind (default: `localhost`)
-- `SERVER_PORT` — port to serve (default: `8000`)
-- `DEBUG` — enable debug mode (`1` / `true` / `yes`)
-- `APP_ENV` — environment name (`development` / `production`)
-- `DATA_DIR` — custom storage directory for JSON files
-- `WEB_AUTH_USER` and `WEB_AUTH_PASS` — optional Basic Auth credentials for the web UI
-- `ALLOWED_HOSTS` — comma-separated allowed client hosts (default: `localhost,127.0.0.1,::1`)
+   * Detects improvement or decline over recent attempts.
 
-## Docker Deployment
+4. Review Scheduling
 
-Build and run the container locally:
+   * Dynamically adjusts review intervals based on topic performance.
 
-```bash
-docker build -t adaptive-learning-engine .
-docker run -p 8000:8000 -e APP_SECRET=replace-this-secret adaptive-learning-engine
-```
+5. Priority Scoring
 
-Or use Docker Compose:
+   * Combines mastery, confidence, trend, difficulty, and review age to determine what should be studied next.
 
-```bash
-docker compose up --build
-```
+Topics with the highest priority are recommended first.
 
-## Requirements
+---
 
-- Python 3.9+
+## Tech Stack
 
-No external libraries are required.
+Backend:
+
+* Python
+
+Data Storage:
+
+* JSON-based persistence
+
+Security:
+
+* PBKDF2 password hashing
+* Session authentication
+
+Deployment:
+
+* Docker
+* Render
+
+Version Control:
+
+* Git
+* GitHub
+
+---
+
+## Project Structure
+
+adaptive-learning-platform/
+
+├── core/
+
+├── services/
+
+├── storage/
+
+├── utils/
+
+├── tests/
+
+├── data/
+
+├── Dockerfile
+
+├── docker-compose.yml
+
+├── requirements.txt
+
+└── main.py
+
+---
+
+## Future Improvements
+
+* AI-generated study recommendations
+* Advanced spaced repetition algorithms
+* Analytics dashboards and visualizations
+* Performance forecasting
+* Multi-device synchronization
+* Database integration
+
+---
+
+## Motivation
+
+I built this project to explore how software can personalize education and make learning more efficient.
+
+Instead of treating every topic equally, the platform attempts to identify where a learner should focus attention next based on performance data and study history.
+
+The project combines software engineering, learning analytics, recommendation systems, and web application development.
+
+---
+
+## Author
+
+Swarn
+
+GitHub:
+https://github.com/swarn3017-boop
+
+Project Repository:
+https://github.com/swarn3017-boop/adaptive-learning-platform

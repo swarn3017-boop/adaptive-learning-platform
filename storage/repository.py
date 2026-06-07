@@ -76,40 +76,70 @@ class AccountRepository:
 class ProfileRepository:
     def __init__(self) -> None:
         self.profiles: List[LearnerProfile] = [LearnerProfile.from_dict(entry) for entry in load_profiles()]
+        
+        # Migrate profiles lacking owner field to 'default' user for backward compatibility
+        for profile in self.profiles:
+            if not hasattr(profile, 'owner') or not profile.owner:
+                profile.owner = 'default'
+        
         if not self.profiles:
             legacy_topics = load_topics()
             legacy_state = load_state()
-            self.profiles = [LearnerProfile(name='default', created_at=datetime.now(), state=legacy_state, topics=legacy_topics)]
+            self.profiles = [LearnerProfile(name='default', owner='default', created_at=datetime.now(), state=legacy_state, topics=legacy_topics)]
             self.save()
 
-    def list_profiles(self) -> List[LearnerProfile]:
-        return self.profiles
+    def list_profiles(self, owner: Optional[str] = None) -> List[LearnerProfile]:
+        """Return all profiles, optionally filtered by owner."""
+        if owner is None:
+            return self.profiles
+        return [profile for profile in self.profiles if profile.owner == owner]
 
-    def find_by_name(self, name: str) -> LearnerProfile:
+    def list_profiles_by_owner(self, owner: str) -> List[LearnerProfile]:
+        """Return profiles owned by a specific user."""
+        return [profile for profile in self.profiles if profile.owner == owner]
+
+    def find_by_name(self, name: str, owner: Optional[str] = None) -> LearnerProfile:
+        """Find a profile by name, optionally filtered by owner."""
         for profile in self.profiles:
-            if profile.name == name:
+            if profile.name == name and (owner is None or profile.owner == owner):
                 return profile
+        if owner:
+            raise ValueError(f'Profile "{name}" not found for user "{owner}"')
         raise ValueError(f'Profile not found: {name}')
 
-    def get_or_create(self, name: str) -> LearnerProfile:
+    def find_by_name_and_owner(self, name: str, owner: str) -> LearnerProfile:
+        """Find a profile by name and owner (enforced)."""
+        return self.find_by_name(name, owner=owner)
+
+    def get_or_create(self, name: str, owner: str = 'default') -> LearnerProfile:
+        """Get or create a profile with owner enforcement."""
         try:
-            return self.find_by_name(name)
+            return self.find_by_name(name, owner=owner)
         except ValueError:
-            profile = LearnerProfile(name=name, created_at=datetime.now())
+            profile = LearnerProfile(name=name, owner=owner, created_at=datetime.now())
             self.profiles.append(profile)
             self.save()
             return profile
 
-    def add_profile(self, name: str) -> LearnerProfile:
-        if any(profile.name == name for profile in self.profiles):
-            raise ValueError(f'Profile already exists: {name}')
-        profile = LearnerProfile(name=name, created_at=datetime.now())
+    def add_profile(self, name: str, owner: str) -> LearnerProfile:
+        """Add a new profile with ownership enforcement."""
+        # Check if THIS USER already has a profile with this name
+        if any(profile.name == name and profile.owner == owner for profile in self.profiles):
+            raise ValueError(f'Profile "{name}" already exists for user "{owner}"')
+        profile = LearnerProfile(name=name, owner=owner, created_at=datetime.now())
         self.profiles.append(profile)
         self.save()
         return profile
 
-    def delete_profile(self, name: str) -> None:
-        self.profiles = [profile for profile in self.profiles if profile.name != name]
+    def delete_profile(self, name: str, owner: Optional[str] = None) -> None:
+        """Delete a profile, optionally verifying ownership."""
+        if owner:
+            # Verify ownership before deletion
+            try:
+                self.find_by_name_and_owner(name, owner)
+            except ValueError:
+                raise ValueError(f'Cannot delete profile: ownership verification failed')
+        self.profiles = [profile for profile in self.profiles if not (profile.name == name and (owner is None or profile.owner == owner))]
         self.save()
 
     def save(self) -> None:

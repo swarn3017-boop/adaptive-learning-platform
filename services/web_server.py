@@ -45,7 +45,8 @@ class LearningHandler(BaseHTTPRequestHandler):
     def _get_service(self) -> LearningService:
         if getattr(self, '_service_cache', None) is None:
             username = self._get_current_user() or 'default'
-            self._service_cache = LearningService(username)
+            # Pass both profile_name and username to LearningService for user-scoped access
+            self._service_cache = LearningService(profile_name=username, username=username)
         return self._service_cache
 
     @property
@@ -668,8 +669,9 @@ class LearningHandler(BaseHTTPRequestHandler):
         if profile_name:
             try:
                 self.service.create_profile(profile_name)
-            except ValueError:
-                pass
+            except ValueError as exc:
+                self._render_page('Error', f"<section><h2>Failed to Create Profile</h2><p>{exc}</p><p><a href='/'>Back to home</a></p></section>")
+                return
         self._redirect('/')
 
     def _handle_select_profile(self, data: dict) -> None:
@@ -677,8 +679,10 @@ class LearningHandler(BaseHTTPRequestHandler):
         if profile_name:
             try:
                 self.service.select_profile(profile_name)
-            except ValueError:
-                pass
+            except ValueError as exc:
+                # User tried to access a profile they don't own
+                self._render_page('Unauthorized', f"<section><h2>Cannot Access Profile</h2><p>You do not have permission to access profile '{profile_name}'.</p><p><a href='/'>Back to home</a></p></section>")
+                return
         self._redirect('/')
 
     def _handle_study_session(self, data: dict) -> None:

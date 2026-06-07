@@ -19,11 +19,27 @@ from pathlib import Path
 
 
 class LearningService:
-    def __init__(self, profile_name: str = 'default') -> None:
+    def __init__(self, profile_name: str = 'default', username: str = 'default') -> None:
+        """Initialize service with user context for access control.
+        
+        Args:
+            profile_name: Name of the profile to load (must be owned by username)
+            username: Authenticated username for ownership verification
+        """
+        self.username = username
         self.profile_repo = ProfileRepository()
         self.account_repo = AccountRepository()
-        self.active_profile = self.profile_repo.get_or_create(profile_name)
+        # Load profile with ownership verification
+        self.active_profile = self.profile_repo.get_or_create(profile_name, owner=username)
         self.state = self.active_profile.state
+    
+    def _verify_profile_access(self, profile_name: str) -> LearnerProfile:
+        """Verify that the current user owns the requested profile.
+        
+        Raises:
+            ValueError: If profile does not exist or is not owned by current user
+        """
+        return self.profile_repo.find_by_name_and_owner(profile_name, self.username)
 
     def _persist_topic(self, topic: TopicProgress) -> None:
         for index, existing in enumerate(self.active_profile.topics):
@@ -180,7 +196,10 @@ class LearningService:
         self.profile_repo.save()
 
     def export_history_csv(self) -> str:
-        """Return a CSV string containing recommendation and feedback history suitable for Excel."""
+        """Return a CSV string containing recommendation and feedback history suitable for Excel.
+        
+        Note: Only exports data from the active profile (current user's data).
+        """
         import csv
         import io
 
@@ -212,19 +231,49 @@ class LearningService:
         return output.getvalue()
 
     def export_all_data(self) -> str:
+        """Export all data accessible to the current user.
+        
+        Returns only:
+        - Current user's account details
+        - Profiles owned by the current user
+        """
+        user_account = None
+        try:
+            user_account = self.account_repo.find_by_username(self.username)
+        except ValueError:
+            pass
+        
         payload = {
-            'users': [account.to_dict() for account in self.account_repo.list_accounts()],
-            'profiles': [profile.to_dict() for profile in self.profile_repo.list_profiles()],
+            'user': user_account.to_dict() if user_account else None,
+            'profiles': [profile.to_dict() for profile in self.profile_repo.list_profiles(owner=self.username)],
         }
         return json.dumps(payload, indent=2)
 
     def import_all_data(self, payload: str) -> None:
+        """Import profile data for the current user.
+        
+        Note: This only imports profiles that are owned by the current user or have no owner set.
+        """
         data = json.loads(payload)
-        if 'users' in data:
-            self.account_repo.accounts = [UserAccount.from_dict(entry) for entry in data['users']]
-            self.account_repo.save()
+        
         if 'profiles' in data:
-            self.profile_repo.profiles = [LearnerProfile.from_dict(entry) for entry in data['profiles']]
+            imported_profiles = [LearnerProfile.from_dict(entry) for entry in data['profiles']]
+            # Only import profiles owned by current user (or unowned for backward compat)
+            for profile in imported_profiles:
+                if not hasattr(profile, 'owner') or not profile.owner:
+                    profile.owner = self.username
+                if profile.owner == self.username:
+                    # Check if already exists
+                    try:
+                        self.profile_repo.find_by_name_and_owner(profile.name, self.username)
+                        # Profile exists, update it
+                        for i, existing in enumerate(self.profile_repo.profiles):
+                            if existing.name == profile.name and existing.owner == self.username:
+                                self.profile_repo.profiles[i] = profile
+                                break
+                    except ValueError:
+                        # Profile doesn't exist, add it
+                        self.profile_repo.profiles.append(profile)
             self.profile_repo.save()
 
     def create_backup(self) -> Path:
@@ -244,15 +293,22 @@ class LearningService:
         self.profile_repo.save()
 
     def list_profiles(self) -> List[str]:
-        return [profile.name for profile in self.profile_repo.list_profiles()]
+        """Return only profiles owned by the current user."""
+        return [profile.name for profile in self.profile_repo.list_profiles(owner=self.username)]
 
     def create_profile(self, name: str) -> LearnerProfile:
-        profile = self.profile_repo.add_profile(name)
+        """Create a new profile owned by the current user."""
+        profile = self.profile_repo.add_profile(name, owner=self.username)
         self.select_profile(name)
         return profile
 
     def select_profile(self, name: str) -> LearnerProfile:
-        profile = self.profile_repo.get_or_create(name)
+        """Switch to a profile, with ownership verification.
+        
+        Raises:
+            ValueError: If profile does not exist or is not owned by current user
+        """
+        profile = self._verify_profile_access(name)
         self.active_profile = profile
         self.state = profile.state
         return profile
@@ -271,13 +327,15 @@ class LearningService:
         password_hash = hash_password(password, salt)
         account = UserAccount(username=username, password_hash=password_hash, salt=salt, created_at=datetime.now())
         self.account_repo.add_account(account)
-        self.profile_repo.get_or_create(username)
+        # Create a default profile owned by the new user
+        self.profile_repo.add_profile(username, owner=username)
         return account
 
     def list_accounts(self) -> List[str]:
         return [account.username for account in self.account_repo.list_accounts()]
 
     def get_dashboard_data(self) -> Dict[str, str]:
+        """Get dashboard data for the current user's active profile."""
         topics = self.get_topics()
         due = self.get_due_topics()
         weak = sorted(topics, key=lambda topic: topic.score)[:5]
@@ -286,6 +344,7 @@ class LearningService:
             subjects.setdefault(topic.subject or 'General', []).append(topic)
         return {
             'active_profile': self.active_profile.name,
+            'user': self.username,
             'topic_count': str(len(topics)),
             'due_count': str(len(due)),
             'weak_topics': ', '.join([topic.topic for topic in weak]) if weak else 'None',

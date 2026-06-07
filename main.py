@@ -95,6 +95,7 @@ def run_backup_data(service: LearningService, args) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Adaptive Learning Engine CLI')
     parser.add_argument('--profile', default='default', help='Profile name to use')
+    parser.add_argument('--username', default='default', help='Username for access control (required for protected operations)')
     subparsers = parser.add_subparsers(dest='command')
 
     add_parser = subparsers.add_parser('add-topic', help='Add a new learning topic')
@@ -137,8 +138,8 @@ def main() -> None:
         run_web_server(args.host, args.port)
         return
 
-    # Load persisted state and topic data at startup
-    service = LearningService(args.profile)
+    # Load persisted state and topic data at startup with user context
+    service = LearningService(profile_name=args.profile, username=args.username)
 
     if args.command == 'add-topic':
         run_add_topic(service, args)

@@ -83,6 +83,7 @@ class LearningSystemState:
 @dataclass
 class LearnerProfile:
     name: str
+    owner: str  # Username of the account that owns this profile
     created_at: datetime
     state: LearningSystemState = field(default_factory=LearningSystemState)
     topics: List[TopicProgress] = field(default_factory=list)
@@ -90,6 +91,7 @@ class LearnerProfile:
     def to_dict(self) -> Dict[str, Any]:
         return {
             'name': self.name,
+            'owner': self.owner,
             'created_at': self.created_at.isoformat(),
             'state': self.state.to_dict(),
             'topics': [topic.to_dict() for topic in self.topics],
@@ -99,6 +101,7 @@ class LearnerProfile:
     def from_dict(data: Dict[str, Any]) -> 'LearnerProfile':
         return LearnerProfile(
             name=str(data.get('name', 'default')),
+            owner=str(data.get('owner', 'default')),  # Default to 'default' for backward compatibility
             created_at=datetime.fromisoformat(data.get('created_at', datetime.now().isoformat())),
             state=LearningSystemState.from_dict(data.get('state', {})),
             topics=[TopicProgress.from_dict(entry) for entry in data.get('topics', [])],

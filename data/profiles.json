@@ -1,23 +1,8 @@
 [
   {
-    "name": "default",
-    "created_at": "2026-06-07T11:04:53.373515",
-    "state": {
-      "weights": {
-        "mastery": 0.0,
-        "confidence": 0.0,
-        "age": 0.0,
-        "difficulty": 0.0,
-        "trend": 0.0
-      },
-      "recommendation_history": [],
-      "feedback_log": []
-    },
-    "topics": []
-  },
-  {
-    "name": "testuser",
-    "created_at": "2026-06-07T11:04:59.054431",
+    "name": "alice_math",
+    "owner": "alice",
+    "created_at": "2026-06-07T12:24:23.173009",
     "state": {
       "weights": {
         "mastery": 0.28,
@@ -32,8 +17,43 @@
     "topics": []
   },
   {
-    "name": "swarn",
-    "created_at": "2026-06-07T11:21:50.930276",
+    "name": "bob_math",
+    "owner": "bob",
+    "created_at": "2026-06-07T12:24:23.173009",
+    "state": {
+      "weights": {
+        "mastery": 0.28,
+        "confidence": 0.35,
+        "age": 0.2,
+        "difficulty": 0.12,
+        "trend": 0.05
+      },
+      "recommendation_history": [],
+      "feedback_log": []
+    },
+    "topics": []
+  },
+  {
+    "name": "bob_math",
+    "owner": "alice",
+    "created_at": "2026-06-07T12:24:23.173009",
+    "state": {
+      "weights": {
+        "mastery": 0.28,
+        "confidence": 0.35,
+        "age": 0.2,
+        "difficulty": 0.12,
+        "trend": 0.05
+      },
+      "recommendation_history": [],
+      "feedback_log": []
+    },
+    "topics": []
+  },
+  {
+    "name": "test_user",
+    "owner": "test_user",
+    "created_at": "2026-06-07T12:25:19.243034",
     "state": {
       "weights": {
         "mastery": 0.28,

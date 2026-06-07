@@ -1,0 +1,11 @@
+{
+  "weights": {
+    "mastery": 0.28,
+    "confidence": 0.35,
+    "age": 0.2,
+    "difficulty": 0.12,
+    "trend": 0.05
+  },
+  "recommendation_history": [],
+  "feedback_log": []
+}

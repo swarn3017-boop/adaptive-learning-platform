@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  adaptive-learning-engine:
+    build: .
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./data:/app/data
+    environment:
+      - APP_ENV=production
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - APP_SECRET=replace-this-secret
+      - ALLOWED_HOSTS=0.0.0.0,localhost,127.0.0.1

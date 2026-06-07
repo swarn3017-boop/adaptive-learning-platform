@@ -1,0 +1,8 @@
+[
+  {
+    "username": "testuser",
+    "password_hash": "27a0282094bcd488f3e9f924b81673c375e0a05ae584429326238c00cb054e8f",
+    "salt": "cd4cb9edb5c49bdb64da3a5f1e035f1e",
+    "created_at": "2026-06-07T11:26:50.282718"
+  }
+]
